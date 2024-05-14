@@ -25,7 +25,7 @@ git commit -m "$commit_message"
 
 # 执行 git push 命令推送更改到 GitHub 仓库，并检查推送结果
 echo "Pushing changes to GitHub repository..."
-if git push "https://github.com/$github_username/$repository_name.git" master; then
+if git push "https://github.com/$github_username/$repository_name.git"; then
     echo "Push successful!"
 else
     echo "Push failed. Check the reason."
