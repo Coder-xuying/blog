@@ -27,8 +27,8 @@ def main():
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
+        observer.join()
 
-    observer.join()
 
 if __name__ == "__main__":
     main()
