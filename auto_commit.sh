@@ -8,7 +8,7 @@ repository_name="blog"
 commit_message="Update"
 
 # 设置本次提交的作者名为 "xy"
-commit_author="xy"
+git config user.name "xy"
 
 # 检查是否提供了提交消息参数
 if [[ $# -gt 0 ]]; then
