@@ -1,5 +1,8 @@
 #!/bin/bash
 
+git pull
+echo "拉取成功"
+
 # 设置 GitHub 用户名和仓库信息
 github_username="Coder-xuying"
 repository_name="blog"
