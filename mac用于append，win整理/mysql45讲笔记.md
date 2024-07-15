@@ -164,6 +164,59 @@ binlog 会记录所有的逻辑操作，并且是采用“追加写”的形式�
 
 
 
+> 三种格式
+
+命令看bin log记录
+
+```sql
+delete from t /*comment*/ where a>=4 and t_modified<='2018-11-10' limit 1;
+```
+
+1、**statement:**
+
+![img](https://static001.geekbang.org/resource/image/b9/31/b9818f73cd7d38a96ddcb75350b52931.png?wh=1882*213)
+
+- binlog 里面记录的就是 SQL 语句的原文 
+  - begin  和commit 代表事务的开始和结束
+  - 6197 是真正的执行语句
+  - commit中的xid 是干什么用？ XID是用来联系bin log和redo log的。比如redo log里面有一个事务是prepare状态，但是不知道是不是commit状态，那就可以用XID去bin log里面查询该事务到底有没有提交。有提交则是commit状态，若没有提交则回滚该事务。
+- show warning：会有一个warning提示，因为 binlog 设置的是 statement 格式，并且语句中有 limit，所以这个命令可能是 **unsafe** 的。
+  - 这个记录可能会导致主备不一致，因为可能选取的索引不一样，比如是a，那么就是a=4的记录，如果是t_modified 可能是a = 5 的那行数据，mysql认为这是有风险的
+
+2、**row格式**
+
+![img](https://static001.geekbang.org/resource/image/d6/26/d67a38db154afff610ae3bb64e266826.png?wh=1920*533)
+
+上面的还需要用mysqlbinlog 解析binlog的内容 
+
+`mysqlbinlog  -vv data/master.000001 --start-position=8900;`
+
+![img](https://static001.geekbang.org/resource/image/c3/c2/c342cf480d23b05d30a294b114cebfc2.png?wh=1920*664)
+
+- 解析：
+  - Table_map event，用于说明接下来要操作的表是 test 库的表 t;
+  - Delete_rows event，用于定义删除的行为。
+  - 可以看到binlog解析后的值，用@1 = 4 明确了主键id，和其他字段的值，所以备库执行的时候也只会对同一行进行删除
+- 不会有主备不一致的问题
+
+3、**mixed模式** 
+
+结合statement和row的混合模式，
+
+为什么需要这么一个模式？
+
+1、statement会有主备不一致的问题，所以要用row模式
+
+2、row格式缺点，很占空间，比如我用delete删除10w条，statement就一个语句，但是row的就需要把10w行记录写到binlog里，不仅影响空间，写binlog还耗费io资源，影响执行速度
+
+所以mysql做的个折中的方案，会自己判断这条sql是否引起主备不一致的问题，如果可能就用row，否则用statement
+
+**mixed 格式可以利用 statment 格式的优点，同时又避免了数据不一致的风险。**
+
+
+
+最后：其实mixed模式现在很少用了 ，磁盘内存增长速度很大很大了，都是用row格式，方便**数据恢复**
+
 ##### redo log 和 bin log 的理解
 
 - redo log
@@ -212,7 +265,7 @@ binlog 会记录所有的逻辑操作，并且是采用“追加写”的形式�
 
 ##### 事务隔离的实现
 
-> 可重复读
+###### 可重复读
 
 在 MySQL 中，实际上每条记录在更新的时候都会同时记录一条回滚操作。记录上的最新值，通过回滚操作，都可以得到前一个状态的值。
 
@@ -235,6 +288,10 @@ binlog 会记录所有的逻辑操作，并且是采用“追加写”的形式�
 **最好不用长事务**：
 
 - 长事务意味着系统里面会存在很老的事务视图。由于这些事务随时可能访问数据库里面的任何数据，所以这个事务提交之前，数据库里面它可能用到的回滚记录都必须保留，这就会导致大量占用存储空间。
+
+###### 幻读
+
+
 
 ##### 事务的启动方式
 
