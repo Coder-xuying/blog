@@ -296,8 +296,11 @@ delete from t /*comment*/ where a>=4 and t_modified<='2018-11-10' limit 1;
 ##### 事务的启动方式
 
 - 显示启动事务，begin 或 start transaction。配套的提交语句是 commit，回滚语句是 rollback。
+  - begin/start transaction 命令并不是一个事务的起点，在执行第一个操作DB的语句，事务才真正启动
+  - 如果想马上启动一个事务可以用`start transaction with consistent snapshot `
+  - 
+
 - set autocommit=0，这个命令会将这个线程的自动提交关掉。意味着如果你只执行一个 select 语句，这个事务就启动了，而且并不会自动提交。事务持续存在直到你主动执行 commit 或 rollback 语句，或者断开连接
-- 
 
 #### 4.索引
 

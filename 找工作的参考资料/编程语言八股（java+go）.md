@@ -1535,7 +1535,7 @@ type hmap struct {
     extra *mapextra 
     // 这个字段是为了优化GC扫描而设计的。当key和value均不包含指针，并且都可以inline时使用。extra是指向mapextra类型的指针。
  }
-。
+
 ```
 
 - map中buckets存的是个指针，所以如果map1 = map2，那么map1和map2就都用了同一个桶的引用，修改其中的一个map，另外一个的值也会被修改

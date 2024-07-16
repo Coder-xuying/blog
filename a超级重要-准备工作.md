@@ -79,7 +79,7 @@ java相关
 
 优先级排名：
 
-- 第一档：mysql、redis、jvm、多线程、算法（必考）、kafka、系统设计
+- 第一档：mysql、**redis**、**jvm**、多线程、算法（必考）、**kafka**、**系统设计**
 - 第二档：spring、java集合和基础知识、hbase、分布式理论、zk
 - 第三档：计算机网络、操作系统
 - 第四档：本地缓存caffeine、链路追踪cat、版本控制git、构建工具gradle

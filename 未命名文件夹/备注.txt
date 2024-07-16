@@ -1,0 +1,2 @@
+Test.py 里记录的是监听项目路径文档有保存的操作的自动提交github脚本
+auto_commit_win.bat脚本是windows下自动拉取最新分支和提交自己最新改动的脚本
