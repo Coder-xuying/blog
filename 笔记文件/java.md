@@ -1,3 +1,78 @@
+## 泛型
+
+##### 泛型接口
+
+```java
+interface Info<T>{        // 在接口上定义泛型  
+    public T getVar() ; // 定义抽象方法，抽象方法的返回值就是泛型类型  
+} 
+class InfoImpl<T> implements Info<T>{   // 定义泛型接口的子类  
+    private T var ;             // 定义属性  
+    public InfoImpl(T var){     // 通过构造方法设置属性内容  
+        this.setVar(var) ;    
+    }  
+    public void setVar(T var){  
+        this.var = var ;  
+    }  
+    public T getVar(){  
+        return this.var ;  
+    }  
+} 
+
+```
+
+##### 泛型方法
+
+```java
+// 必须指定<T>，声明这是一个泛型方法，持有一个泛型T
+// Class<T>的作用就是指明泛型的具体类型,变量c，可以用来创建泛型类的对象。（利用反射，因为我们不知道传入的泛型类型）
+public <T> T getObject(Class<T> c){
+  
+}
+```
+
+##### 泛型的上下限
+
+> 上限
+
+`<? extends A>`表示该类型参数可以是A(上边界)或者A的子类类型。编译时擦除到类型A，即用A类型代替类型参数。
+
+```java
+public static void funC(List<? extends A> listA) {  // 如果不用extends ，下面方法执行会报错
+    // ...          
+}
+public static void funD(List<B> listB) {
+    funC(listB); // OK
+    // ...             
+}
+```
+
+> 下限
+
+```java
+public static void fun(Info<? super String> temp){    // 只能接收String或Object类型的泛型，String类的父类只有Object类
+  System.out.print(temp + ", ") ;
+}
+```
+
+> 总结
+
+```java
+<?> 无限制通配符
+<? extends E> extends 关键字声明了类型的上界，表示参数化的类型可能是所指定的类型，或者是此类型的子类
+<? super E> super 关键字声明了类型的下界，表示参数化的类型可能是指定的类型，或者是此类型的父类
+
+// 为了获得最大限度的灵活性，要在表示 生产者或者消费者 的输入参数上使用通配符，使用的规则就是：生产者有上限、消费者有下限
+1. 如果参数化类型表示一个 T 的生产者，使用 < ? extends T>;
+2. 如果它表示一个 T 的消费者，就使用 < ? super T>；
+3. 如果既是生产又是消费，那使用通配符就没什么意义了，因为你需要的是精确的参数类型。
+
+```
+
+
+
+
+
 ## 1、锁
 
 #### 1、乐观锁和悲观锁
