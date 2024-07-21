@@ -69,14 +69,15 @@ List 类型的底层数据结构是由**双向链表或压缩列表**实现的�
 
 Hash 特别适合用于存储对象。Hash 类型的底层数据结构是由**压缩列表或哈希表**实现的：
 
-- 选择同list一样。不过7.0版本
-- **压缩列表数据结构已经废弃了，交由 listpack 数据结构来实现了**。
+redis7.0 开始**压缩列表数据结构已经废弃了，交由 listpack 数据结构来实现了**。
 
 
 
 ##### 2.场景
 
-- 缓存对象 
+- 缓存一个对象 `Hset uid:1 name 17 age man `
+  - Hash 类型的 （key，field， value） 的结构与对象的（对象id， 属性， 值）的结构相似，也可以用来存储对象。
+
 - 购物车：
   - 添加商品：`HSET cart:{用户id} {商品id} 1`
   - 添加数量：`HINCRBY cart:{用户id} {商品id} 1`
@@ -102,7 +103,18 @@ Set 类型的底层数据结构是由**哈希表或整数集合**实现的：
 Set 类型比较适合用来数据去重和保障数据的唯一性，还可以用来统计多个集合的交集、错集和并集。但是**Set 的差集、并集和交集的计算复杂度较高，在数据量较大的情况下，如果直接执行这些计算，会导致 Redis 实例阻塞**。（在主从模式中，通常使用从库完成聚合统计操作）
 
 - 点赞： SADD article:1 uid:1 uid:2 用户1和2都给文章1点赞
+
 - 共同关注
+
+  - ```redis
+    > SADD uid:1 5 6 7 8 9
+    > SADD uid:2 7 8 9 10 11
+    > SINTER uid:1 uid:2
+    1) "7"
+    2) "8"
+    3) "9"
+    ```
+
 - 抽奖活动
 
 #### 5.Zset
@@ -121,7 +133,75 @@ Zset 类型的底层数据结构是由**压缩列表或跳表**实现的：
 ##### 2.应用场景
 
 - 排行榜
+
+  - ```bash
+    // 添加到一个大key里，每个元素有一个分数
+    ZADD KEY_NAME score item
+    
+    # arcticle:1 文章获得了200个赞
+    > ZADD user:xiaolin:ranking 200 arcticle:1
+    (integer) 1
+    # arcticle:2 文章获得了40个赞
+    > ZADD user:xiaolin:ranking 40 arcticle:2
+    (integer) 1
+    # arcticle:3 文章获得了100个赞
+    > ZADD user:xiaolin:ranking 100 arcticle:3
+    (integer) 1
+    # arcticle:4 文章获得了50个赞
+    > ZADD user:xiaolin:ranking 50 arcticle:4
+    (integer) 1
+    # arcticle:5 文章获得了150个赞
+    > ZADD user:xiaolin:ranking 150 arcticle:5
+    (integer) 1
+    # arcticle:4 文章新增一个赞
+    > ZINCRBY user:xiaolin:ranking 1 arcticle:4
+    
+    ```
+
+  - ```bash
+    查看某篇文章的赞数
+    > ZSCORE user:xiaolin:ranking arcticle:4
+    "50"
+    
+    获取赞数最多的3篇文章
+    # WITHSCORES 表示把 score 也显示出来
+    > ZREVRANGE user:xiaolin:ranking 0 2 WITHSCORES
+    1) "arcticle:1"
+    2) "200"
+    3) "arcticle:5"
+    4) "150"
+    5) "arcticle:3"
+    6) "100"
+    ```
+
+  - 
+
 - 电话排序、姓名排序
+
+  - 使用有序集合的 `ZRANGEBYLEX` 或 `ZREVRANGEBYLEX` 可以帮助我们实现电话号码或姓名的排序，我们以 `ZRANGEBYLEX` （返回指定成员区间内的成员，按 key 正序排列，**分数必须相同**）为例。
+
+    - ```bash
+      # 可以看到分数都是0，元素的key是不同的
+      
+      > ZADD phone 0 13100111100 0 13110114300 0 13132110901 
+      (integer) 3
+      > ZADD phone 0 13200111100 0 13210414300 0 13252110901 
+      (integer) 3
+      > ZADD phone 0 13300111100 0 13310414300 0 13352110901 
+      (integer) 3
+      
+      > ZRANGEBYLEX phone - +
+      1) "13100111100"
+      2) "13110114300"
+      3) "13132110901"
+      4) "13200111100"
+      5) "13210414300"
+      6) "13252110901"
+      7) "13300111100"
+      8) "13310414300"
+      9) "13352110901"
+      ```
+
 
 
 
@@ -130,6 +210,28 @@ Zset 类型的底层数据结构是由**压缩列表或跳表**实现的：
 Bitmap，即位图，是一串连续的二进制数组（0和1），可以通过偏移量（offset）定位元素。特别适合一些数据量大且使用**二值统计的场景**。
 
 
+
+#### 7、HyperLogLog
+
+
+
+应用场景
+
+- 百万级网页 UV 计数
+
+
+
+#### 8、GEO
+
+#####  1、基本介绍
+
+GEO 本身并没有设计新的底层数据结构，而是直接使用了 Sorted Set 集合类型。
+
+
+
+##### 2、应用场景
+
+- 滴滴叫车
 
 ## 面试题
 
@@ -240,7 +342,7 @@ redis**执行完**写操作命令，把追加命令写到文件里，命令追�
   - 这里使用子进程，而不是线程，是因为多线程之间会共享内存，修改共享内存需要加锁，降低性能。父子进程则共享内存数据，共享的内存是只读的，
     - 注意，copy on write写的是AOF文件，而不是内存
 
-### 5、Rdis过期策略和内存淘汰策略
+### 5、Redis过期策略和内存淘汰策略
 
 #### 过期删除
 

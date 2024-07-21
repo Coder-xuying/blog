@@ -85,3 +85,5 @@ java相关
 - 第四档：本地缓存caffeine、链路追踪cat、版本控制git、构建工具gradle
 
 掌握能力：mysql
+
+标红的在mac上，先看第一档
